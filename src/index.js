@@ -3,9 +3,9 @@ import serverRouter from './router/server';
 import renderReactRouteResponse from './responses/renderReactRoute';
 
 export default function (sails) {
-  if (!sails.config.react || !sails.config.react.routes) {
-    sails.log.warn('Sails React: No routes config was provided at sails.config.react.routes, ' +
-      'import your routes in the config file.');
+  if (!sails.config.reactRouter || !sails.config.reactRouter.routes) {
+    sails.log.warn('sails-hook-react-router: No routes config was provided.');
+    sails.log.warn('sails-hook-react-router: Please configure your config/react-router.js file.');
     return {};
   }
 
@@ -28,13 +28,13 @@ export default function (sails) {
 
       if (sails.config.webpack && sails.config.webpack.config) {
         sails.after('hook:sails-hook-webpack:compiler-ready', () => {
-          this.loadRoutes(sails.config.react.routes);
+          this.loadRoutes(sails.config.reactRouter.routes);
           sails.on('hook:sails-hook-webpack:after-build', this.onWebpackUpdate);
         });
       } else {
         sails.log.warn('sails-hook-react-router: no webpack configuration has been detected, hot' +
           ' reloading of you react-router routes and sails controllers will be disabled.');
-        this.loadRoutes(sails.config.react.routes);
+        this.loadRoutes(sails.config.reactRouter.routes);
       }
     },
 
@@ -70,7 +70,7 @@ export default function (sails) {
 
       sails.log.verbose('Detected webpack change -- reloading sails routes and react components.');
 
-      this.loadRoutes(sails.config.react.routes, true);
+      this.loadRoutes(sails.config.reactRouter.routes, true);
 
       if (this.sailsLifted) {
         // hot reload sails and react routes.

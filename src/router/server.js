@@ -25,7 +25,7 @@ export default function (req, res) {
     const history = createMemoryHistory();
     const location = createLocation(req.url);
 
-    sailsReactRouter(sails.hooks.react.__routesRequired, location, history, req, res)
+    sailsReactRouter(sails.hooks.reactRouter.__routesRequired, location, history, req, res)
       .then((reactElement) => {
         try {
           const css = [];
