@@ -1,5 +1,5 @@
-import React  from 'react';
-import {match, RouterContext} from 'react-router';
+import React from 'react';
+import { match, RouterContext } from 'react-router';
 
 /**
  * Returns the root component to use in rendering react-router.
@@ -28,19 +28,19 @@ export function getRootComponent(renderProps, routerElement) {
  */
 export function sailsReactRouter(routes, location, history, reqOrProps, res) {
   return new Promise((resolve, reject) => {
-    match({routes, location, history}, (error, redirectLocation, renderProps) => {
+    match({ routes, location, history }, (error, redirectLocation, renderProps) => {
       if (error) {
         return reject(error);
       }
 
       // if we're on the server and have a <Redirect/> location res.redirect to it.
       if (__SERVER__ && res && redirectLocation) {
-        return res.redirect(302, redirectLocation.pathname + redirectLocation.search)
+        return res.redirect(302, redirectLocation.pathname + redirectLocation.search);
       }
 
       // no renderProps so no valid route - send 404 if on server
       if (__SERVER__ && !renderProps) {
-        return res.notFound({location});
+        return res.notFound({ location });
       }
 
       if (renderProps) {

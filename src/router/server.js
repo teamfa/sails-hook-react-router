@@ -1,10 +1,9 @@
 import React from 'react';
-import {sailsReactRouter} from './'
-import {renderToString} from 'react-dom/server';
+import { sailsReactRouter } from './';
+import { renderToString } from 'react-dom/server';
 import createLocation from 'history/lib/createLocation';
 import createMemoryHistory from 'history/lib/createMemoryHistory';
-import WithStylesContext from './../components/WithStylesContext'
-
+import WithStylesContext from './../components/WithStylesContext';
 
 /**
  * Serve a rendered route to a client request - uses req.url.
@@ -54,9 +53,9 @@ export default function (req, res) {
 
           return res.view('layout', {
             locals: {
-              react: req.react
+              react: req.react,
             },
-            body: reactStr
+            body: reactStr,
           });
         } catch (err) {
           return res.serverError(err);

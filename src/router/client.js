@@ -1,9 +1,9 @@
-import React, {PropTypes, Component} from 'react';
-import {render} from 'react-dom';
-import {sailsReactRouter} from './'
+import React from 'react';
+import { render } from 'react-dom';
+import { sailsReactRouter } from './';
 import createLocation from 'history/lib/createLocation';
 import createBrowserHistory from 'history/lib/createBrowserHistory';
-import WithStylesContext from './../components/WithStylesContext'
+import WithStylesContext from './../components/WithStylesContext';
 
 /**
  * Render a route client side, uses document.location
@@ -19,7 +19,7 @@ export default function (routes, props) {
       Object.assign(window.__ReactInitState__, props);
     }
 
-    sailsReactRouter(routes, location, history, {})//state: window.__ReactInitState__ || props
+    sailsReactRouter(routes, location, history, {}) // state: window.__ReactInitState__ || props
       .then((reactElement) => {
         render(
           <WithStylesContext onInsertCss={styles => styles._insertCss()}>

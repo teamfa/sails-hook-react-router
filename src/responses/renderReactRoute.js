@@ -1,5 +1,4 @@
-import {serverRouter} from './../router';
-
+import { serverRouter } from './../router';
 
 /**
  * Returns a sails response so res.renderServerResponse can be used in policies
@@ -10,7 +9,7 @@ import {serverRouter} from './../router';
  * @private
  */
 export default function renderReactRouteResponse(req, res) {
-  return function (props, routeOverride) {
+  return function response(props, routeOverride) {
     if (routeOverride) {
       req.url = routeOverride;
     }
@@ -20,5 +19,5 @@ export default function renderReactRouteResponse(req, res) {
     }
 
     return serverRouter(req, res);
-  }
-};
+  };
+}

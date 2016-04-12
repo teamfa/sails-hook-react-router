@@ -1,15 +1,16 @@
 import { Component, PropTypes, Children } from 'react';
 
-export default class WithStylesContext extends Component {
-  static propTypes = {
-    children: PropTypes.element.isRequired,
-    onInsertCss: PropTypes.func.isRequired
-  };
+const propTypes = {
+  children: PropTypes.element.isRequired,
+  onInsertCss: PropTypes.func.isRequired,
+};
 
-  static childContextTypes = {
-    insertCss: PropTypes.func.isRequired
-  };
+const childContextTypes = {
+  insertCss: PropTypes.func.isRequired,
+};
 
+
+class WithStylesContext extends Component {
   getChildContext() {
     return { insertCss: this.props.onInsertCss };
   }
@@ -18,5 +19,8 @@ export default class WithStylesContext extends Component {
     return Children.only(this.props.children);
   }
 }
+
+WithStylesContext.propTypes = propTypes;
+WithStylesContext.childContextTypes = childContextTypes;
 
 export default WithStylesContext;
