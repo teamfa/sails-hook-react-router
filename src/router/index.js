@@ -21,15 +21,26 @@ export function getRootComponent(renderProps, routerElement) {
  * @param routes
  * @param location
  * @param history
- * @param req
+ * @param reqOrProps
+ * @param res
  * @returns {Promise}
  * @constructor
  */
-export function sailsReactRouter(routes, location, history, req) {
+export function sailsReactRouter(routes, location, history, reqOrProps, res) {
   return new Promise((resolve, reject) => {
     match({routes, location, history}, (error, redirectLocation, renderProps) => {
       if (error) {
         return reject(error);
+      }
+
+      // if we're on the server and have a <Redirect/> location res.redirect to it.
+      if (__SERVER__ && res && redirectLocation) {
+        return res.redirect(302, redirectLocation.pathname + redirectLocation.search)
+      }
+
+      // no renderProps so no valid route - send 404 if on server
+      if (__SERVER__ && !renderProps) {
+        return res.notFound({location});
       }
 
       if (renderProps) {
@@ -39,18 +50,18 @@ export function sailsReactRouter(routes, location, history, req) {
       }
 
       // merge in any user props added onto req via polices and such.
-      // if (__SERVER__ && req && req.react && req.react.props) {
-      //   Object.assign(renderProps, req.react.props);
-      // }
-
-      // client side check for window.__ReactInitState__;
-      if (__CLIENT__ && req && req.state) {
-        Object.assign(renderProps, req.state || {});
+      if (__SERVER__ && reqOrProps && reqOrProps.react && reqOrProps.react.props) {
+        Object.assign(renderProps, reqOrProps.react.props);
       }
 
-      // attach the final state onto req.react for window.__ReactInitState__
-      if (req && req.react) {
-        req.react.state = req.react.props;
+      // attach the final state onto reqOrProps.react for window.__ReactInitState__
+      if (__SERVER__ && reqOrProps && reqOrProps.react) {
+        reqOrProps.react.state = reqOrProps.react.props;
+      }
+
+      // client side check for window.__ReactInitState__;
+      if (__CLIENT__ && reqOrProps && reqOrProps.state) {
+        Object.assign(renderProps, reqOrProps.state || {});
       }
 
       return resolve(getRootComponent(renderProps, routes));
