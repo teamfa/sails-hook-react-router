@@ -105,19 +105,21 @@ export default function (sails) {
         }
       }
 
+      let loaded = false;
+
       try {
         this.__routesCompiled = require(path);
+        loaded = true;
       } catch (e) {
-        console.error(e);
         sails.log.error('shrr: Could not find the routes file you specified or there was an error' +
           ' in the file.');
         sails.log.error(`shrr: ${path}`);
+        sails.log.error(e);
       }
 
-      if (this.__routesCompiled) {
+      if (loaded) {
         this._iterateRouteChildren(this.__routesCompiled);
       }
-
     },
 
     /**
