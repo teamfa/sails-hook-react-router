@@ -59,7 +59,7 @@ export default (
 | API | Description | Type |
 |---|---|---|---|
 | routes | A resolved path to a file which exports a Router component | string |
-| reloadOnWebpackBuild | Hot reload routes, sails controllers, services etc after every webpack build (only applies to DEV environment). | boolean |
+| reloadOnWebpackBuild | Hot reload routes, sails controllers, services etc after every webpack build (only applies in DEV environment). Requires [sails-hook-webpack](https://github.com/teamfa/sails-hook-webpack) to be installed. | boolean |
 | isomorphicStyleLoader | If enabled, crtitical component styles will be rendered server side. This helps deal with [FOUC](https://en.wikipedia.org/wiki/Flash_of_unstyled_content) issue on client side applications. | boolean |
 | routingPreference | Which router takes preference on route loading. If two routes on Sails and React are identical, whichever is specified here will be loaded over the other. | string (react/sails) |
 
@@ -72,8 +72,6 @@ MIT
 
 <img src='http://i.imgur.com/NsAdNdJ.png'>
 
-[sails-logo]: http://cdn.tjw.io/images/sails-logo.png
-[sails-url]: https://sailsjs.org
 [npm-image]: https://img.shields.io/npm/v/sails-hook-webpack.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/sails-hook-webpack
 [travis-image]: https://img.shields.io/travis/teamfa/sails-hook-webpack.svg?style=flat-square
