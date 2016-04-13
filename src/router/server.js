@@ -20,7 +20,8 @@ export default function (req, res) {
   const history = createMemoryHistory();
   const location = createLocation(req.url);
   const routes = sails.hooks[req.reactHookConfigKey].__routesCompiled;
-  const withStyles = sails.hooks[req.reactHookConfigKey].isomorphicStyleLoader;
+  const withStyles = sails.config[req.reactHookConfigKey].isomorphicStyleLoader;
+
   let reactHtmlString = '';
 
   sailsReactRouter(
@@ -29,7 +30,7 @@ export default function (req, res) {
     history,
     req,
     res
-  ).then((reactElement) => {
+  ).then((reactElement) => { /* eslint consistent-return:0 */
     try {
       if (withStyles) {
         // also extract inline css for insertion to page header.
