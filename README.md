@@ -100,9 +100,9 @@ MIT
 
 <img src='http://i.imgur.com/NsAdNdJ.png'>
 
-[npm-image]: https://img.shields.io/npm/v/sails-hook-webpack.svg?style=flat-square
-[npm-url]: https://npmjs.org/package/sails-hook-webpack
-[travis-image]: https://img.shields.io/travis/teamfa/sails-hook-webpack.svg?style=flat-square
-[travis-url]: https://travis-ci.org/teamfa/sails-hook-webpack
-[daviddm-image]: http://img.shields.io/david/teamfa/sails-hook-webpack.svg?style=flat-square
-[daviddm-url]: https://david-dm.org/teamfa/sails-hook-webpack
+[npm-image]: https://img.shields.io/npm/v/sails-hook-react-router.svg?style=flat-square
+[npm-url]: https://npmjs.org/package/sails-hook-react-router
+[travis-image]: https://img.shields.io/travis/teamfa/sails-hook-react-router.svg?style=flat-square
+[travis-url]: https://travis-ci.org/teamfa/sails-hook-react-router
+[daviddm-image]: http://img.shields.io/david/teamfa/sails-hook-react-router.svg?style=flat-square
+[daviddm-url]: https://david-dm.org/teamfa/sails-hook-react-router
