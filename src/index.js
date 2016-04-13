@@ -5,7 +5,7 @@ import renderReactRouteResponse from './responses/renderReactRoute';
 export default function (sails) {
   return {
 
-    __routesRequired: {},
+    __routesCompiled: {},
 
     defaults: {
       __configKey__: {
@@ -56,10 +56,14 @@ export default function (sails) {
         return cb();
       }
 
+      // keep an internal key to track sails lift state
+      // maybe sails already has a var for this somewhere?
       sails.on('lifted', () => {
         this.sailsLifted = true;
       });
 
+      // bind on extra polices and res methods
+      // TODO polices
       sails.on('router:before', () => {
         if (sails.hooks.i18n) {
           sails.after('hook:i18n:loaded', () => {
@@ -70,26 +74,28 @@ export default function (sails) {
         }
       });
 
-      if (sails.config.webpack && sails.config.webpack.config) {
+      // bootstrap react-router routes or wait for webpack if installed and then bootstrap
+      if (config.reloadOnWebpackBuild && sails.config.webpack && sails.config.webpack.config) {
         sails.after('hook:sails-hook-webpack:compiler-ready', () => {
-          this.loadRoutes(config.routes); // need to load here also bleh.
-          sails.on('hook:sails-hook-webpack:after-build', this.onWebpackUpdate);
+          this._loadRoutes(config.routes); // need to load here also bleh.
+          sails.on('hook:sails-hook-webpack:after-build', this._onWebpackUpdate);
         });
       } else {
         sails.log.warn('shrr: no webpack configuration has been detected, hot' +
           ' reloading of you react-router routes and sails controllers will be disabled.');
-        this.loadRoutes(config.routes);
+        this._loadRoutes(config.routes);
       }
 
       return cb();
     },
 
     /**
-     *
+     * Reloads the routes module via require, optionally clears require cache.
      * @param path
      * @param clearCache
+     * @private
      */
-    loadRoutes(path, clearCache) {
+    _loadRoutes(path, clearCache) {
       if (clearCache) {
         try {
           delete require.cache[require.resolve(path)];
@@ -100,18 +106,28 @@ export default function (sails) {
       }
 
       try {
-        this.__routesRequired = require(path);
-        this.iterateRouteChildren(this.__routesRequired);
+        this.__routesCompiled = require(path);
       } catch (e) {
-        sails.log.error('shrr: Could not find the routes file you specified.');
+        console.error(e);
+        sails.log.error('shrr: Could not find the routes file you specified or there was an error' +
+          ' in the file.');
         sails.log.error(`shrr: ${path}`);
       }
+
+      if (this.__routesCompiled) {
+        this._iterateRouteChildren(this.__routesCompiled);
+      }
+
     },
 
     /**
-     * Reloads all routes and sails controllers, services and blueprints.
+     * Reloads all react-router routes, sails controllers, services and blueprints.
+     * TODO needs some more tweaks, will pull this out and use chokidir to watch for sails
+     * TODO specific changes, rather than reloading everything all the time
+     * TODO Extend to include models, policies and sails config
+     * @private
      */
-    onWebpackUpdate() {
+    _onWebpackUpdate() {
       const _this = this; // sails loadAndRegisterControllers overrides binding =/
 
       sails.log.verbose('shrr: webpack after build - reloading sails routes and react components.');
@@ -138,7 +154,7 @@ export default function (sails) {
           sails.hooks.blueprints.bindShadowRoutes();
 
           // create react-router routes
-          _this.loadRoutes(sails.config[_this.configKey].routes, true);
+          _this._loadRoutes(sails.config[_this.configKey].routes, true);
         });
       }
     },
@@ -149,8 +165,9 @@ export default function (sails) {
      * @param name
      * @param path
      * @param routingPreference
+     * @private
      */
-    addRoute(name, path, routingPreference) {
+    _addRoute(name, path, routingPreference) {
       if (path !== '/*') { // ignore NotFound routes, let sails handle this.
         if (name && name.length) {
           name = name.charAt(0).toUpperCase() + name.substr(1);
@@ -178,10 +195,11 @@ export default function (sails) {
      * sails routes.
      * @param routeComponent
      * @param parentPath
+     * @private
      */
-    iterateRouteChildren(routeComponent, parentPath) {
+    _iterateRouteChildren(routeComponent, parentPath) {
       if (!parentPath && routeComponent.props.path) {
-        this.addRoute(
+        this._addRoute(
           routeComponent.props.name,
           routeComponent.props.path,
           routeComponent.props.routingPreference
@@ -203,11 +221,11 @@ export default function (sails) {
           const pathWithParent = parentPath ? parentPath + child.props.path : child.props.path;
 
           if (child.props.path) {
-            this.addRoute(child.props.name, pathWithParent, child.props.routingPreference);
+            this._addRoute(child.props.name, pathWithParent, child.props.routingPreference);
           }
 
           if (child.props && child.props.children) {
-            this.iterateRouteChildren(child, pathWithParent);
+            this._iterateRouteChildren(child, pathWithParent);
           }
         });
       }
