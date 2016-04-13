@@ -12,9 +12,9 @@ const defaultClientOptions = {
 
 /**
  * Render a route client side, uses document.location
- * @param routes
- * @param props
- * @param options
+ * @param routes your routes file
+ * @param props additional props to mount
+ * @param options router options, see client router options
  */
 export default function (routes, props, options) {
   if (!__CLIENT__) {

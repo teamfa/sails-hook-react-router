@@ -3,15 +3,43 @@ import serverRouter from './router/server';
 import renderReactRouteResponse from './responses/renderReactRoute';
 
 export default function (sails) {
-  if (!sails.config.reactRouter || !sails.config.reactRouter.routes) {
-    sails.log.warn('sails-hook-react-router: No routes config was provided.');
-    sails.log.warn('sails-hook-react-router: Please configure your config/react-router.js file.');
-    return {};
-  }
-
   return {
 
     __routesRequired: {},
+
+    defaults: {
+      __configKey__: {
+        // Resolved path to your webpack compiled react-router routes file,
+        // therefore it's best not to clutter this file with anything except your routes
+        // and their child components as these will be bundled.
+        //
+        // A path is used to allow watching in development - for hot reloads.
+        //
+        // e.g path.resolve(__dirname, './../.tmp/react-router/routes')
+        //
+        // See the starter project for an example webpack config to generate this file.
+        routes: '',
+
+        // hot reload routes, sails controllers, services etc after every webpack
+        // build - this only applies to development.
+        reloadOnWebpackBuild: true,
+
+        // if you don't want to use isomorphic-style-loader
+        // (https://github.com/kriasoft/isomorphic-style-loader)
+        // then turn this off.
+        // Note: if you turn this off then you'll also need to turn this off on the clientRouter
+        // options also.
+        isomorphicStyleLoader: true,
+
+        // which router takes preference on route loading, 'sails' or 'react'
+        // setting this to react will ignore sails routes that are identical to a react-router route
+        // setting this to sails will ignore react-router routes that are identical to a sails route
+        //
+        // Note: this only applies to server side rendering - client rendered routes will always be
+        // well... client rendered :P
+        routingPreference: 'react',  // react or sails
+      },
+    },
 
     sailsLifted: false,
 
@@ -20,22 +48,40 @@ export default function (sails) {
      * @param cb
      */
     initialize(cb) {
-      cb();
+      const config = sails.config[this.configKey];
+
+      if (!config || !config.routes) {
+        sails.log.warn('shrr: No routes config was provided.');
+        sails.log.warn('shrr: Please configure your config/react-router.js file.');
+        return cb();
+      }
 
       sails.on('lifted', () => {
         this.sailsLifted = true;
       });
 
+      sails.on('router:before', () => {
+        if (sails.hooks.i18n) {
+          sails.after('hook:i18n:loaded', () => {
+            sails.router.bind('/*', this._addRenderReactRouteMethod, 'all', {});
+          });
+        } else {
+          sails.router.bind('/*', this._addRenderReactRouteMethod, 'all');
+        }
+      });
+
       if (sails.config.webpack && sails.config.webpack.config) {
         sails.after('hook:sails-hook-webpack:compiler-ready', () => {
-          this.loadRoutes(sails.config.reactRouter.routes);
+          this.loadRoutes(config.routes); // need to load here also bleh.
           sails.on('hook:sails-hook-webpack:after-build', this.onWebpackUpdate);
         });
       } else {
-        sails.log.warn('sails-hook-react-router: no webpack configuration has been detected, hot' +
+        sails.log.warn('shrr: no webpack configuration has been detected, hot' +
           ' reloading of you react-router routes and sails controllers will be disabled.');
-        this.loadRoutes(sails.config.reactRouter.routes);
+        this.loadRoutes(config.routes);
       }
+
+      return cb();
     },
 
     /**
@@ -48,7 +94,7 @@ export default function (sails) {
         try {
           delete require.cache[require.resolve(path)];
         } catch (e) {
-          sails.log.debug('sails-hook-react-router: Error deletting require cache this is ' +
+          sails.log.debug('shrr: Error deleting require cache this is ' +
             'generally nothing to worry about!');
         }
       }
@@ -57,8 +103,8 @@ export default function (sails) {
         this.__routesRequired = require(path);
         this.iterateRouteChildren(this.__routesRequired);
       } catch (e) {
-        sails.log.error('sails-hook-react-router: Could not find the routes file you specified.');
-        sails.log.error(`sails-hook-react-router: ${path}`);
+        sails.log.error('shrr: Could not find the routes file you specified.');
+        sails.log.error(`shrr: ${path}`);
       }
     },
 
@@ -68,9 +114,7 @@ export default function (sails) {
     onWebpackUpdate() {
       const _this = this; // sails loadAndRegisterControllers overrides binding =/
 
-      sails.log.verbose('Detected webpack change -- reloading sails routes and react components.');
-
-      this.loadRoutes(sails.config.reactRouter.routes, true);
+      sails.log.verbose('shrr: webpack after build - reloading sails routes and react components.');
 
       if (this.sailsLifted) {
         // hot reload sails and react routes.
@@ -94,7 +138,7 @@ export default function (sails) {
           sails.hooks.blueprints.bindShadowRoutes();
 
           // create react-router routes
-          _this.iterateRouteChildren(_this.__routesRequired);
+          _this.loadRoutes(sails.config[_this.configKey].routes, true);
         });
       }
     },
@@ -104,15 +148,29 @@ export default function (sails) {
      * and renders a route.
      * @param name
      * @param path
+     * @param routingPreference
      */
-    addRoute(name, path) {
-      if (name && name.length) {
-        name = name.charAt(0).toUpperCase() + name.substr(1);
-      } else {
-        name = null;
+    addRoute(name, path, routingPreference) {
+      if (path !== '/*') { // ignore NotFound routes, let sails handle this.
+        if (name && name.length) {
+          name = name.charAt(0).toUpperCase() + name.substr(1);
+        } else {
+          name = 'No Name';
+        }
+
+        // use provided routingPreference from route or use the default
+        if (!routingPreference) {
+          routingPreference = sails.config[this.configKey].routingPreference;
+        }
+
+        sails.log.verbose(`shrr: Added new route path "${path}" (pref: ${routingPreference})`);
+
+        if (routingPreference === 'sails') {
+          this.routes.before[`GET ${path}`] = this._routerMiddleware(name, path);
+        } else {
+          this.routes.after[`GET ${path}`] = this._routerMiddleware(name, path);
+        }
       }
-      sails.log.verbose(`Sails React: Added new route "${name}" to path "${path}"`);
-      this.routes.after[`GET ${path}`] = this._routerMiddleware(name, path);
     },
 
     /**
@@ -123,7 +181,12 @@ export default function (sails) {
      */
     iterateRouteChildren(routeComponent, parentPath) {
       if (!parentPath && routeComponent.props.path) {
-        this.addRoute(routeComponent.props.name, routeComponent.props.path);
+        this.addRoute(
+          routeComponent.props.name,
+          routeComponent.props.path,
+          routeComponent.props.routingPreference
+        );
+
         // modify the parent path to to include the components path
         parentPath = parentPath ? parentPath + routeComponent.props.path :
           routeComponent.props.path;
@@ -140,7 +203,7 @@ export default function (sails) {
           const pathWithParent = parentPath ? parentPath + child.props.path : child.props.path;
 
           if (child.props.path) {
-            this.addRoute(child.props.name, pathWithParent);
+            this.addRoute(child.props.name, pathWithParent, child.props.routingPreference);
           }
 
           if (child.props && child.props.children) {
@@ -151,35 +214,52 @@ export default function (sails) {
     },
 
     /**
-     * TODO
+     * TODO - Polices
      * @param name
      * @param path
      * @returns {function()}
      * @private
      */
-    _routerMiddleware: function _routerMiddleware(name, path) {
+    _routerMiddleware(name, path) {
       return (req, res) => {
-        req.react.name = name;
-        req.react.path = path;
-        sails.log.verbose(`Sails React: _routerMiddleware - ${req.url}`);
-        return serverRouter(req, res);
-      };
-    },
-
-    routes: {
-      before: {
-        'GET /*'(req, res, next) {
-          // add the default react object to req for use on renderServerRoute
+        if (!req.react) {
           req.react = {
             title: '',
             state: null,
             props: {},
           };
-          // attach the custom renderReactRoute response for use in user policies and controllers.
-          res.renderReactRoute = renderReactRouteResponse(req, res);
-          return next();
-        },
-      },
+        }
+        req.react.name = name;
+        req.react.path = path;
+        req.reactHookConfigKey = this.configKey;
+        sails.log.verbose(`shrr: _routerMiddleware request: ${req.url}`);
+        return serverRouter(req, res);
+      };
+    },
+
+    /**
+     * Attach the custom renderReactRoute response for use in user policies and controllers.
+     * @param req
+     * @param res
+     * @param next
+     * @returns {*}
+     * @private
+     */
+    _addRenderReactRouteMethod(req, res, next) {
+      // add the default react object to req for use on renderServerRoute
+      req.react = {
+        title: '',
+        state: null,
+        props: {},
+      };
+
+      res.renderReactRoute = renderReactRouteResponse(req, res);
+
+      next();
+    },
+
+    routes: {
+      before: {},
       after: {},
     },
   };
