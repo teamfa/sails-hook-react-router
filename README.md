@@ -29,12 +29,13 @@ module.exports.react = {
 
 ```
 
-> See below API for the full set of config options.
+> See below config API for the full set of options.
 
 ### React Router setup
 The routes file now simply needs to return a set of React Router routes. For more information, check the [React Router documentation](https://github.com/reactjs/react-router/blob/master/docs/guides/RouteConfiguration.md). An example of this file:
 
 ```javascript
+// app/routes.js
 import React from 'react';
 import { Route, Router, IndexRoute, browserHistory } from 'react-router';
 
@@ -54,14 +55,41 @@ export default (
 );
 ```
 
-## API
+You now need to call the hooks `clientRouter` within your JavaScripts entry point to bootstrap the routes:
 
-| API | Description | Type |
+```javascript
+// app/index.js
+import routes from './routes';
+import clientRouter from 'sails-hook-react-router/lib/router/client';
+
+
+clientRouter(
+  routes, 
+  {}, // additional props to pass to router
+  // options - see clientRouter docs
+  {
+    reactRootElementId: 'react-root',
+    isomorphicStyleLoader: true
+  }
+);
+```
+
+## API
+### Config API
+| API | Description | Type | Default |
 |---|---|---|---|
-| routes | A resolved path to a file which exports a Router component | string |
-| reloadOnWebpackBuild | Hot reload routes, sails controllers, services etc after every webpack build (only applies in DEV environment). Requires [sails-hook-webpack](https://github.com/teamfa/sails-hook-webpack) to be installed. | boolean |
-| isomorphicStyleLoader | If enabled, crtitical component styles will be rendered server side. This helps deal with [FOUC](https://en.wikipedia.org/wiki/Flash_of_unstyled_content) issue on client side applications. | boolean |
-| routingPreference | Which router takes preference on route loading. If two routes on Sails and React are identical, whichever is specified here will be loaded over the other. | string (react/sails) |
+| routes | A resolved path to a file which exports a Router component | string |  |
+| reloadOnWebpackBuild | Hot reload routes, sails controllers, services etc after every webpack build (only applies in DEV environment). Requires [sails-hook-webpack](https://github.com/teamfa/sails-hook-webpack) to be installed. | boolean | true |
+| isomorphicStyleLoader | If enabled, crtitical component styles will be rendered server side. This helps deal with [FOUC](https://en.wikipedia.org/wiki/Flash_of_unstyled_content) issue on client side applications. | boolean | true |
+| routingPreference | Which router takes preference on route loading. If two routes on Sails and React are identical, whichever is specified here will be loaded over the other. | string (react/sails) | react |
+
+### clientRouter API
+| API | Description | Type | Default |
+|---|---|---|---|
+| reactRootElementId | The page DOM element **ID** which the app will be rendered to. | string | react-root |
+| isomorphicStyleLoader | If enabled, components will be rendered with [style loader](https://github.com/kriasoft/isomorphic-style-loader). | boolean | true |
+
+> **The `isomorphicStyleLoader` must be the same value on both the Sails config and clientRouter - otherwise you'll experience a React invalid checksum warning.**
 
 ## License
 MIT
