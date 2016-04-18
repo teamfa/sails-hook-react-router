@@ -36,14 +36,7 @@ export default function (req, res) {
         // also extract inline css for insertion to page header.
         reactHtmlString = renderToString(
           <WithStylesContext onInsertCss={
-            styles => {
-              if (Array.isArray(styles)) {
-                styles.forEach(style => css.push(style._getCss()));
-              } else {
-                css.push(styles._getCss());
-              }
-            }
-          }
+            (...styles) => styles.forEach(style => css.push(style._getCss()))}
           >
             {reactElement}
           </WithStylesContext>

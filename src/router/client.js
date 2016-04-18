@@ -41,14 +41,7 @@ export default function (routes, props, options) {
       if (options.isomorphicStyleLoader) {
         renderComponents = (
           <WithStylesContext onInsertCss={
-            styles => {
-              if (Array.isArray(styles)) {
-                styles.forEach(style => style._insertCss());
-              } else {
-                styles._insertCss();
-              }
-            }
-          }
+            (...styles) => styles.forEach(style => style._insertCss()) }
           >
             {component}
           </WithStylesContext>

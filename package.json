@@ -1,6 +1,6 @@
 {
   "name": "sails-hook-react-router",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "React universal router for sails.",
   "keywords": [
     "sails",
