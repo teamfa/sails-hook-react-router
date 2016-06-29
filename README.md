@@ -14,6 +14,10 @@ npm install sails-hook-react-router --save
 
 > This project requires React >0.14 & React Router >1.0 (`npm install react react-router --save`)
 
+## Example Project
+
+And example project for this router can be found [here](https://github.com/teamfa/sails-universal-react-starter).
+
 ### Sails setup
 Create a `react` config which at minimum returns the resolved path to your React Router exported routes, e.g:
 
